@@ -6,6 +6,7 @@
     <title>Prontuário Eletrônico - Hospital Cruz de Malta</title>
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <header>
@@ -192,9 +193,11 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Salvar Prontuário</button>
-                <button type="button" id="clearBtn" class="btn btn-secondary">Limpar Formulário</button>
-                <button type="button" id="newPatientBtn" class="btn btn-tertiary">Novo Paciente</button>
+              <button id="searchBtn" class="btn"><i class="fas fa-search"></i> Consultar</button>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Prontuário</button>
+              <button type="button" id="clearBtn" class="btn btn-secondary"><i class="fas fa-broom"></i> Limpar</button>
+              <button type="button" id="newPatientBtn" class="btn btn-tertiary"><i class="fas fa-user-plus"></i> Novo</button>
+              <button type="button" id="exportPdfBtn" class="btn btn-tertiary"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
             </div>
         </form>
     </div>
@@ -204,6 +207,8 @@
         <p>Sistema de Prontuário Eletrônico - Versão 1.0</p>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>

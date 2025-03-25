@@ -240,3 +240,99 @@ document.addEventListener('DOMContentLoaded', function() {
   // Gerar ID inicial para novo paciente
   document.getElementById('patientId').value = generatePatientId();
 });
+
+// Validação de CPF
+function validateCPF(cpf) {
+    cpf = cpf.replace(/[^\d]+/g,'');
+    if(cpf == '') return false;
+    
+    // Elimina CPFs invalidos conhecidos    
+    if (cpf.length != 11 || 
+        cpf == "00000000000" || 
+        cpf == "11111111111" || 
+        cpf == "22222222222" || 
+        cpf == "33333333333" || 
+        cpf == "44444444444" || 
+        cpf == "55555555555" || 
+        cpf == "66666666666" || 
+        cpf == "77777777777" || 
+        cpf == "88888888888" || 
+        cpf == "99999999999")
+        return false;
+        
+    // Valida 1o digito
+    let add = 0;
+    for (let i=0; i < 9; i ++)     
+        add += parseInt(cpf.charAt(i)) * (10 - i);
+    let rev = 11 - (add % 11);
+    if (rev == 10 || rev == 11)     
+        rev = 0;
+    if (rev != parseInt(cpf.charAt(9)))     
+        return false;
+        
+    // Valida 2o digito
+    add = 0;
+    for (let i = 0; i < 10; i ++)        
+        add += parseInt(cpf.charAt(i)) * (11 - i);
+    rev = 11 - (add % 11);
+    if (rev == 10 || rev == 11) 
+        rev = 0;
+    if (rev != parseInt(cpf.charAt(10)))
+        return false;
+        
+    return true;
+}
+
+// Validação de telefone
+function validatePhone(phone) {
+    return phone.replace(/\D/g, '').length >= 10;
+}
+
+// Adicione ao evento submit do formulário:
+const cpfField = document.getElementById('cpf');
+if (cpfField.value && !validateCPF(cpfField.value)) {
+    alert('CPF inválido!');
+    isValid = false;
+    cpfField.style.borderColor = 'red';
+}
+
+const phoneField = document.getElementById('phone');
+if (!validatePhone(phoneField.value)) {
+    alert('Telefone inválido!');
+    isValid = false;
+    phoneField.style.borderColor = 'red';
+}
+
+// Máscaras para os campos
+$(document).ready(function(){
+  $('#cpf').mask('000.000.000-00');
+  $('#rg').mask('00.000.000-0');
+  $('#phone').mask('(00) 00000-0000');
+  $('#emergencyContact').mask('(00) 00000-0000');
+  $('input[name="guardianPhone"]').mask('(00) 00000-0000');
+});
+
+document.getElementById('exportPdfBtn').addEventListener('click', function() {
+  // Simulação - na prática use bibliotecas como jsPDF ou html2pdf
+  alert('Funcionalidade de exportação para PDF será implementada!\n\nPermitirá salvar ou imprimir o prontuário.');
+});
+
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+      toast.style.display = 'block';
+      setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => {
+              toast.remove();
+          }, 300);
+      }, 3000);
+  }, 100);
+}
+
+// Exemplo de uso no submit:
+showToast('Prontuário salvo com sucesso!', 'success');
