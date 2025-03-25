@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prontuário Eletrônico - Hospital Cruz de Malta</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="Hospital Cruz de Malta" class="logo">
+            <h1>Hospital Cruz de Malta</h1>
+        </div>
+        <img src="images/hospital.jpg" alt="Hospital" class="header-image">
+    </header>
+
+    <div class="container">
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Digite o nome do paciente...">
+            <button id="searchBtn" class="btn">Consultar</button>
+        </div>
+
+        <form id="patientForm" class="patient-form">
+            <h2>Formulário de Prontuário</h2>
+            
+            <div class="form-section">
+                <h3>Informações Básicas</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fullName">Nome Completo*</label>
+                        <input type="text" id="fullName" name="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patientId">ID do Paciente</label>
+                        <input type="text" id="patientId" name="patientId" readonly>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="birthDate">Data de Nascimento*</label>
+                        <input type="date" id="birthDate" name="birthDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Idade</label>
+                        <input type="number" id="age" name="age" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Sexo*</label>
+                        <select id="gender" name="gender" required>
+                            <option value="">Selecione</option>
+                            <option value="masculino">Masculino</option>
+                            <option value="feminino">Feminino</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="registerDate">Data de Cadastro</label>
+                        <input type="date" id="registerDate" name="registerDate" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="ethnicity">Cor/Etnia</label>
+                        <select id="ethnicity" name="ethnicity">
+                            <option value="">Selecione</option>
+                            <option value="branca">Branca</option>
+                            <option value="preta">Preta</option>
+                            <option value="parda">Parda</option>
+                            <option value="amarela">Amarela</option>
+                            <option value="indigena">Indígena</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cpf">CPF</label>
+                        <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00">
+                    </div>
+                    <div class="form-group">
+                        <label for="rg">RG</label>
+                        <input type="text" id="rg" name="rg" placeholder="00.000.000-0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fatherName">Nome do Pai</label>
+                        <input type="text" id="fatherName" name="fatherName">
+                    </div>
+                    <div class="form-group">
+                        <label for="motherName">Nome da Mãe*</label>
+                        <input type="text" id="motherName" name="motherName" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Telefone/WhatsApp*</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(00) 00000-0000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profession">Profissão</label>
+                        <input type="text" id="profession" name="profession">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="education">Escolaridade</label>
+                        <select id="education" name="education">
+                            <option value="">Selecione</option>
+                            <option value="fundamental-incompleto">Fundamental Incompleto</option>
+                            <option value="fundamental-completo">Fundamental Completo</option>
+                            <option value="medio-incompleto">Médio Incompleto</option>
+                            <option value="medio-completo">Médio Completo</option>
+                            <option value="superior-incompleto">Superior Incompleto</option>
+                            <option value="superior-completo">Superior Completo</option>
+                            <option value="pos-graduacao">Pós-graduação</option>
+                            <option value="mestrado">Mestrado</option>
+                            <option value="doutorado">Doutorado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="emergencyContact">Segundo Contato (Emergência)*</label>
+                        <input type="tel" id="emergencyContact" name="emergencyContact" placeholder="(00) 00000-0000" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nationality">Nacionalidade</label>
+                        <input type="text" id="nationality" name="nationality" value="Brasileira">
+                    </div>
+                    <div class="form-group">
+                        <label for="naturality">Naturalidade (Cidade/Estado)</label>
+                        <input type="text" id="naturality" name="naturality" placeholder="Cidade/UF">
+                    </div>
+                </div>
+
+                <div class="form-group" id="guardians-container">
+                    <label>Responsáveis (se menor de idade)</label>
+                    <div class="guardian-input">
+                        <input type="text" name="guardianName" placeholder="Nome do Responsável">
+                        <input type="text" name="guardianRelationship" placeholder="Parentesco">
+                        <input type="tel" name="guardianPhone" placeholder="Telefone">
+                        <button type="button" class="btn-remove-guardian">-</button>
+                    </div>
+                    <button type="button" id="addGuardianBtn" class="btn-secondary">+ Adicionar Responsável</button>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Histórico Médico</h3>
+                <div class="form-group">
+                    <label>Doenças Pré-existentes</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="preexistingConditions" value="hipertensao"> Hipertensão</label>
+                        <label><input type="checkbox" name="preexistingConditions" value="diabetes"> Diabetes</label>
+                        <label><input type="checkbox" name="preexistingConditions" value="asma"> Asma</label>
+                        <label><input type="checkbox" name="preexistingConditions" value="cardiopatia"> Cardiopatia</label>
+                        <label><input type="checkbox" name="preexistingConditions" value="outras"> Outras</label>
+                        <input type="text" id="otherConditions" name="otherConditions" placeholder="Especifique outras condições" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Alergias</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="allergies" value="penicilina"> Penicilina</label>
+                        <label><input type="checkbox" name="allergies" value="dipirona"> Dipirona</label>
+                        <label><input type="checkbox" name="allergies" value="iodo"> Iodo</label>
+                        <label><input type="checkbox" name="allergies" value="latex"> Látex</label>
+                        <label><input type="checkbox" name="allergies" value="outras"> Outras</label>
+                        <input type="text" id="otherAllergies" name="otherAllergies" placeholder="Especifique outras alergias" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="currentMedications">Medicações em Uso</label>
+                    <textarea id="currentMedications" name="currentMedications" rows="3" placeholder="Liste as medicações que o paciente está utilizando atualmente"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="medicalHistory">Histórico Médico Adicional</label>
+                    <textarea id="medicalHistory" name="medicalHistory" rows="4" placeholder="Informe cirurgias prévias, internações anteriores, ou qualquer outra informação relevante"></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar Prontuário</button>
+                <button type="button" id="clearBtn" class="btn btn-secondary">Limpar Formulário</button>
+                <button type="button" id="newPatientBtn" class="btn btn-tertiary">Novo Paciente</button>
+            </div>
+        </form>
+    </div>
+
+    <footer>
+        <p>© 2023 Hospital Cruz de Malta - Todos os direitos reservados</p>
+        <p>Sistema de Prontuário Eletrônico - Versão 1.0</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
