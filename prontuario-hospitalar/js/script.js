@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Elementos do formulário
   const patientForm = document.getElementById('patientForm');
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
   const clearBtn = document.getElementById('clearBtn');
   const newPatientBtn = document.getElementById('newPatientBtn');
+  const exportPdfBtn = document.getElementById('exportPdfBtn');
   const birthDateInput = document.getElementById('birthDate');
   const ageInput = document.getElementById('age');
   const registerDateInput = document.getElementById('registerDate');
@@ -14,17 +14,18 @@ document.addEventListener('DOMContentLoaded', function() {
   const otherAllergiesCheckbox = document.querySelector('input[name="allergies"][value="outras"]');
   const otherConditionsInput = document.getElementById('otherConditions');
   const otherAllergiesInput = document.getElementById('otherAllergies');
+  const loadingIndicator = document.getElementById('loadingIndicator');
 
-  // Definir data de cadastro como hoje
+  // Data atual para cadastro
   const today = new Date().toISOString().split('T')[0];
   registerDateInput.value = today;
+  document.getElementById('patientId').value = generatePatientId();
 
-  // Gerar ID do paciente (simulação)
+  // 1. Funções utilitárias
   function generatePatientId() {
       return 'PAT-' + Math.floor(100000 + Math.random() * 900000);
   }
 
-  // Calcular idade a partir da data de nascimento
   function calculateAge(birthDate) {
       if (!birthDate) return '';
       
@@ -40,299 +41,334 @@ document.addEventListener('DOMContentLoaded', function() {
       return age;
   }
 
-  // Atualizar idade quando a data de nascimento muda
+  function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      const icon = document.createElement('i');
+      icon.className = type === 'error' ? 'fas fa-exclamation-circle' : 
+                       type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle';
+      
+      toast.appendChild(icon);
+      toast.appendChild(document.createTextNode(message));
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+          toast.classList.add('fade-out');
+          setTimeout(() => toast.remove(), 500);
+      }, 3000);
+  }
+
+  function showLoading(show) {
+      loadingIndicator.style.display = show ? 'flex' : 'none';
+  }
+
+  function validateCPF(cpf) {
+      cpf = cpf.replace(/[^\d]+/g,'');
+      if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+      
+      let sum = 0, remainder;
+      
+      for (let i = 1; i <= 9; i++) 
+          sum += parseInt(cpf.substring(i-1, i)) * (11 - i);
+      remainder = (sum * 10) % 11;
+      
+      if ((remainder === 10) || (remainder === 11)) remainder = 0;
+      if (remainder !== parseInt(cpf.substring(9, 10))) return false;
+      
+      sum = 0;
+      for (let i = 1; i <= 10; i++) 
+          sum += parseInt(cpf.substring(i-1, i)) * (12 - i);
+      remainder = (sum * 10) % 11;
+      
+      if ((remainder === 10) || (remainder === 11)) remainder = 0;
+      return remainder === parseInt(cpf.substring(10, 11));
+  }
+
+  function validateForm() {
+      let isValid = true;
+      const requiredFields = [
+          'fullName', 'birthDate', 'gender', 
+          'motherName', 'phone', 'emergencyContact'
+      ];
+
+      // Valida campos obrigatórios
+      requiredFields.forEach(id => {
+          const field = document.getElementById(id);
+          if (!field.value.trim()) {
+              field.style.borderColor = 'var(--danger-color)';
+              isValid = false;
+          } else {
+              field.style.borderColor = '';
+          }
+      });
+
+      // Valida CPF se preenchido
+      const cpfField = document.getElementById('cpf');
+      if (cpfField.value && !validateCPF(cpfField.value)) {
+          showToast('CPF inválido!', 'error');
+          cpfField.style.borderColor = 'var(--danger-color)';
+          isValid = false;
+      }
+
+      // Valida telefones
+      const phoneFields = [
+          document.getElementById('phone'),
+          document.getElementById('emergencyContact')
+      ];
+      
+      phoneFields.forEach(field => {
+          const digits = field.value.replace(/\D/g, '');
+          if (digits.length < 10 || digits.length > 11) {
+              showToast(`Telefone ${field.placeholder} inválido!`, 'error');
+              field.style.borderColor = 'var(--danger-color)';
+              isValid = false;
+          }
+      });
+
+      return isValid;
+  }
+
+  function getFormData() {
+      const formData = {
+          basicInfo: {},
+          medicalHistory: {}
+      };
+
+      // Informações básicas
+      formData.basicInfo = {
+          id: document.getElementById('patientId').value,
+          fullName: document.getElementById('fullName').value,
+          birthDate: document.getElementById('birthDate').value,
+          age: document.getElementById('age').value,
+          gender: document.getElementById('gender').value,
+          registerDate: document.getElementById('registerDate').value,
+          ethnicity: document.getElementById('ethnicity').value,
+          cpf: document.getElementById('cpf').value,
+          rg: document.getElementById('rg').value,
+          fatherName: document.getElementById('fatherName').value,
+          motherName: document.getElementById('motherName').value,
+          phone: document.getElementById('phone').value,
+          profession: document.getElementById('profession').value,
+          education: document.getElementById('education').value,
+          emergencyContact: document.getElementById('emergencyContact').value,
+          nationality: document.getElementById('nationality').value,
+          naturality: document.getElementById('naturality').value
+      };
+
+      // Responsáveis
+      formData.basicInfo.guardians = [];
+      document.querySelectorAll('.guardian-input').forEach(guardian => {
+          formData.basicInfo.guardians.push({
+              name: guardian.querySelector('input[name="guardianName"]').value,
+              relationship: guardian.querySelector('input[name="guardianRelationship"]').value,
+              phone: guardian.querySelector('input[name="guardianPhone"]').value
+          });
+      });
+
+      // Histórico médico
+      formData.medicalHistory = {
+          preexistingConditions: Array.from(
+              document.querySelectorAll('input[name="preexistingConditions"]:checked')
+          ).map(el => el.value),
+          otherConditions: document.getElementById('otherConditions').value,
+          allergies: Array.from(
+              document.querySelectorAll('input[name="allergies"]:checked')
+          ).map(el => el.value),
+          otherAllergies: document.getElementById('otherAllergies').value,
+          currentMedications: document.getElementById('currentMedications').value,
+          additionalHistory: document.getElementById('medicalHistory').value
+      };
+
+      return formData;
+  }
+
+  // 2. Event Listeners
   birthDateInput.addEventListener('change', function() {
       ageInput.value = calculateAge(this.value);
   });
 
-  // Adicionar novo responsável
-  addGuardianBtn.addEventListener('click', function() {
+  addGuardianBtn.addEventListener('click', addGuardian);
+
+  clearBtn.addEventListener('click', function() {
+      if (confirm('Tem certeza que deseja limpar o formulário?')) {
+          resetForm();
+          showToast('Formulário limpo', 'success');
+      }
+  });
+
+  newPatientBtn.addEventListener('click', function() {
+      if (confirm('Iniciar novo prontuário? As alterações não salvas serão perdidas.')) {
+          resetForm();
+          document.getElementById('patientId').value = generatePatientId();
+          showToast('Novo prontuário criado', 'success');
+      }
+  });
+
+  searchBtn.addEventListener('click', searchPatient);
+
+  exportPdfBtn.addEventListener('click', function() {
+      showLoading(true);
+      setTimeout(() => {
+          showLoading(false);
+          showToast('PDF gerado com sucesso (simulação)', 'success');
+      }, 1500);
+  });
+
+  patientForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      if (!validateForm()) {
+          showToast('Preencha os campos obrigatórios corretamente', 'error');
+          return;
+      }
+
+      showLoading(true);
+      
+      // Simulação de envio ao servidor
+      setTimeout(() => {
+          showLoading(false);
+          const formData = getFormData();
+          console.log('Dados para envio:', formData);
+          showToast('Prontuário salvo com sucesso!', 'success');
+          
+          // Atualiza ID para novo possível cadastro
+          document.getElementById('patientId').value = generatePatientId();
+      }, 2000);
+  });
+
+  otherConditionsCheckbox.addEventListener('change', function() {
+      otherConditionsInput.style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) otherConditionsInput.value = '';
+  });
+
+  otherAllergiesCheckbox.addEventListener('change', function() {
+      otherAllergiesInput.style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) otherAllergiesInput.value = '';
+  });
+
+  // 3. Funções principais
+  function addGuardian() {
       const guardianDiv = document.createElement('div');
       guardianDiv.className = 'guardian-input';
       
       guardianDiv.innerHTML = `
           <input type="text" name="guardianName" placeholder="Nome do Responsável">
           <input type="text" name="guardianRelationship" placeholder="Parentesco">
-          <input type="tel" name="guardianPhone" placeholder="Telefone">
-          <button type="button" class="btn-remove-guardian">-</button>
+          <input type="tel" name="guardianPhone" placeholder="Telefone" class="phone-mask">
+          <button type="button" class="btn-remove-guardian"><i class="fas fa-minus"></i></button>
       `;
       
       guardiansContainer.insertBefore(guardianDiv, addGuardianBtn);
       
-      // Adicionar evento ao botão de remover
-      const removeBtn = guardianDiv.querySelector('.btn-remove-guardian');
-      removeBtn.addEventListener('click', function() {
+      // Adiciona máscara ao telefone
+      if (typeof $ !== 'undefined') {
+          $(guardianDiv).find('.phone-mask').mask('(00) 00000-0000');
+      }
+      
+      // Adiciona evento ao botão de remover
+      guardianDiv.querySelector('.btn-remove-guardian').addEventListener('click', function() {
           guardianDiv.remove();
+          showToast('Responsável removido', 'warning');
       });
-  });
-
-  // Mostrar/ocultar campo "outras condições"
-  otherConditionsCheckbox.addEventListener('change', function() {
-      otherConditionsInput.style.display = this.checked ? 'block' : 'none';
-      if (!this.checked) otherConditionsInput.value = '';
-  });
-
-  // Mostrar/ocultar campo "outras alergias"
-  otherAllergiesCheckbox.addEventListener('change', function() {
-      otherAllergiesInput.style.display = this.checked ? 'block' : 'none';
-      if (!this.checked) otherAllergiesInput.value = '';
-  });
-
-  // Limpar formulário
-  clearBtn.addEventListener('click', function() {
-      if (confirm('Tem certeza que deseja limpar o formulário? Todos os dados não salvos serão perdidos.')) {
-          patientForm.reset();
-          ageInput.value = '';
-          registerDateInput.value = today;
-          document.getElementById('patientId').value = '';
-          
-          // Remover todos os responsáveis adicionais
-          const guardianInputs = document.querySelectorAll('.guardian-input');
-          guardianInputs.forEach((input, index) => {
-              if (index > 0) input.remove(); // Mantém o primeiro
-          });
-          
-          // Resetar campos condicionais
-          otherConditionsInput.style.display = 'none';
-          otherConditionsInput.value = '';
-          otherAllergiesInput.style.display = 'none';
-          otherAllergiesInput.value = '';
-      }
-  });
-
-  // Novo paciente
-  newPatientBtn.addEventListener('click', function() {
-      if (confirm('Iniciar um novo prontuário? Certifique-se de que salvou as alterações no paciente atual.')) {
-          patientForm.reset();
-          ageInput.value = '';
-          registerDateInput.value = today;
-          document.getElementById('patientId').value = generatePatientId();
-          
-          // Remover todos os responsáveis adicionais
-          const guardianInputs = document.querySelectorAll('.guardian-input');
-          guardianInputs.forEach((input, index) => {
-              if (index > 0) input.remove(); // Mantém o primeiro
-          });
-          
-          // Resetar campos condicionais
-          otherConditionsInput.style.display = 'none';
-          otherConditionsInput.value = '';
-          otherAllergiesInput.style.display = 'none';
-          otherAllergiesInput.value = '';
-      }
-  });
-
-  // Pesquisar paciente (simulação)
-  searchBtn.addEventListener('click', function() {
-      const searchTerm = searchInput.value.trim();
-      
-      if (searchTerm === '') {
-          alert('Por favor, digite um nome para pesquisa.');
-          return;
-      }
-      
-      // Simulação de busca - em um sistema real, isso seria uma requisição AJAX
-      alert(`Pesquisando por: ${searchTerm}\n\nEsta funcionalidade será implementada com integração ao banco de dados.`);
-      
-      // Simulação de resultado (dados fictícios)
-      if (searchTerm.toLowerCase() === 'exemplo') {
-          document.getElementById('fullName').value = 'João da Silva Exemplo';
-          document.getElementById('patientId').value = 'PAT-123456';
-          document.getElementById('birthDate').value = '1980-05-15';
-          document.getElementById('age').value = calculateAge('1980-05-15');
-          document.getElementById('gender').value = 'masculino';
-          document.getElementById('ethnicity').value = 'branca';
-          document.getElementById('cpf').value = '123.456.789-00';
-          document.getElementById('rg').value = '12.345.678-9';
-          document.getElementById('fatherName').value = 'Carlos da Silva';
-          document.getElementById('motherName').value = 'Maria da Silva';
-          document.getElementById('phone').value = '(11) 98765-4321';
-          document.getElementById('profession').value = 'Engenheiro';
-          document.getElementById('education').value = 'superior-completo';
-          document.getElementById('emergencyContact').value = '(11) 91234-5678';
-          document.getElementById('nationality').value = 'Brasileira';
-          document.getElementById('naturality').value = 'São Paulo/SP';
-          
-          // Simular histórico médico
-          document.querySelector('input[name="preexistingConditions"][value="hipertensao"]').checked = true;
-          document.querySelector('input[name="allergies"][value="penicilina"]').checked = true;
-          document.getElementById('currentMedications').value = 'Losartana 50mg - 1x ao dia';
-          document.getElementById('medicalHistory').value = 'Apêndice removido em 2010.';
-          
-          alert('Paciente encontrado! Dados carregados no formulário.');
-      } else {
-          alert('Nenhum paciente encontrado com esse nome.');
-      }
-  });
-
-  // Enviar formulário (simulação)
-  patientForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      // Validação básica
-      const requiredFields = ['fullName', 'birthDate', 'gender', 'motherName', 'phone', 'emergencyContact'];
-      let isValid = true;
-      
-      requiredFields.forEach(fieldId => {
-          const field = document.getElementById(fieldId);
-          if (!field.value.trim()) {
-              field.style.borderColor = 'red';
-              isValid = false;
-          } else {
-              field.style.borderColor = '';
-          }
-      });
-      
-      if (!isValid) {
-          alert('Por favor, preencha todos os campos obrigatórios marcados em vermelho.');
-          return;
-      }
-      
-      // Simular envio para o banco de dados
-      console.log('Dados do formulário:', getFormData());
-      alert('Prontuário salvo com sucesso! (Simulação)\n\nNa implementação real, os dados serão enviados para o banco de dados MySQL.');
-      
-      // Gerar novo ID para o próximo paciente
-      document.getElementById('patientId').value = generatePatientId();
-  });
-
-  // Função para obter dados do formulário
-  function getFormData() {
-      const formData = {};
-      const formElements = patientForm.elements;
-      
-      for (let element of formElements) {
-          if (element.name) {
-              if (element.type === 'checkbox') {
-                  if (!formData[element.name]) formData[element.name] = [];
-                  if (element.checked) formData[element.name].push(element.value);
-              } else if (element.type !== 'button' && element.type !== 'submit') {
-                  formData[element.name] = element.value;
-              }
-          }
-      }
-      
-      // Coletar responsáveis
-      const guardians = [];
-      const guardianInputs = document.querySelectorAll('.guardian-input');
-      
-      guardianInputs.forEach(input => {
-          const name = input.querySelector('input[name="guardianName"]').value;
-          const relationship = input.querySelector('input[name="guardianRelationship"]').value;
-          const phone = input.querySelector('input[name="guardianPhone"]').value;
-          
-          if (name || relationship || phone) {
-              guardians.push({
-                  name,
-                  relationship,
-                  phone
-              });
-          }
-      });
-      
-      if (guardians.length > 0) {
-          formData.guardians = guardians;
-      }
-      
-      return formData;
   }
 
-  // Gerar ID inicial para novo paciente
-  document.getElementById('patientId').value = generatePatientId();
-});
+  function resetForm() {
+      patientForm.reset();
+      ageInput.value = '';
+      registerDateInput.value = today;
+      
+      // Remove responsáveis extras
+      const guardians = document.querySelectorAll('.guardian-input');
+      guardians.forEach((guardian, index) => {
+          if (index > 0) guardian.remove();
+      });
+      
+      // Reseta campos condicionais
+      otherConditionsInput.style.display = 'none';
+      otherConditionsInput.value = '';
+      otherAllergiesInput.style.display = 'none';
+      otherAllergiesInput.value = '';
+  }
 
-// Validação de CPF
-function validateCPF(cpf) {
-    cpf = cpf.replace(/[^\d]+/g,'');
-    if(cpf == '') return false;
-    
-    // Elimina CPFs invalidos conhecidos    
-    if (cpf.length != 11 || 
-        cpf == "00000000000" || 
-        cpf == "11111111111" || 
-        cpf == "22222222222" || 
-        cpf == "33333333333" || 
-        cpf == "44444444444" || 
-        cpf == "55555555555" || 
-        cpf == "66666666666" || 
-        cpf == "77777777777" || 
-        cpf == "88888888888" || 
-        cpf == "99999999999")
-        return false;
-        
-    // Valida 1o digito
-    let add = 0;
-    for (let i=0; i < 9; i ++)     
-        add += parseInt(cpf.charAt(i)) * (10 - i);
-    let rev = 11 - (add % 11);
-    if (rev == 10 || rev == 11)     
-        rev = 0;
-    if (rev != parseInt(cpf.charAt(9)))     
-        return false;
-        
-    // Valida 2o digito
-    add = 0;
-    for (let i = 0; i < 10; i ++)        
-        add += parseInt(cpf.charAt(i)) * (11 - i);
-    rev = 11 - (add % 11);
-    if (rev == 10 || rev == 11) 
-        rev = 0;
-    if (rev != parseInt(cpf.charAt(10)))
-        return false;
-        
-    return true;
-}
-
-// Validação de telefone
-function validatePhone(phone) {
-    return phone.replace(/\D/g, '').length >= 10;
-}
-
-// Adicione ao evento submit do formulário:
-const cpfField = document.getElementById('cpf');
-if (cpfField.value && !validateCPF(cpfField.value)) {
-    alert('CPF inválido!');
-    isValid = false;
-    cpfField.style.borderColor = 'red';
-}
-
-const phoneField = document.getElementById('phone');
-if (!validatePhone(phoneField.value)) {
-    alert('Telefone inválido!');
-    isValid = false;
-    phoneField.style.borderColor = 'red';
-}
-
-// Máscaras para os campos
-$(document).ready(function(){
-  $('#cpf').mask('000.000.000-00');
-  $('#rg').mask('00.000.000-0');
-  $('#phone').mask('(00) 00000-0000');
-  $('#emergencyContact').mask('(00) 00000-0000');
-  $('input[name="guardianPhone"]').mask('(00) 00000-0000');
-});
-
-document.getElementById('exportPdfBtn').addEventListener('click', function() {
-  // Simulação - na prática use bibliotecas como jsPDF ou html2pdf
-  alert('Funcionalidade de exportação para PDF será implementada!\n\nPermitirá salvar ou imprimir o prontuário.');
-});
-
-function showToast(message, type = 'success') {
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  
-  setTimeout(() => {
-      toast.style.display = 'block';
+  function searchPatient() {
+      const searchTerm = searchInput.value.trim();
+      
+      if (!searchTerm) {
+          showToast('Digite um nome para pesquisa', 'error');
+          searchInput.focus();
+          return;
+      }
+      
+      showLoading(true);
+      
+      // Simulação de busca (substituir por AJAX na implementação real)
       setTimeout(() => {
-          toast.style.opacity = '0';
-          setTimeout(() => {
-              toast.remove();
-          }, 300);
-      }, 3000);
-  }, 100);
-}
+          showLoading(false);
+          
+          if (searchTerm.toLowerCase().includes('exemplo')) {
+              // Preenche com dados de exemplo
+              fillSampleData();
+              showToast('Paciente encontrado', 'success');
+          } else {
+              showToast('Paciente não encontrado', 'warning');
+          }
+      }, 1500);
+  }
 
-// Exemplo de uso no submit:
-showToast('Prontuário salvo com sucesso!', 'success');
+  function fillSampleData() {
+      // Dados fictícios para exemplo
+      document.getElementById('fullName').value = 'Maria da Silva Exemplo';
+      document.getElementById('patientId').value = 'PAT-789123';
+      document.getElementById('birthDate').value = '1985-08-20';
+      document.getElementById('age').value = calculateAge('1985-08-20');
+      document.getElementById('gender').value = 'feminino';
+      document.getElementById('ethnicity').value = 'parda';
+      document.getElementById('cpf').value = '987.654.321-00';
+      document.getElementById('rg').value = '45.678.901-2';
+      document.getElementById('fatherName').value = 'José da Silva';
+      document.getElementById('motherName').value = 'Ana da Silva';
+      document.getElementById('phone').value = '(11) 98765-4321';
+      document.getElementById('profession').value = 'Enfermeira';
+      document.getElementById('education').value = 'superior-completo';
+      document.getElementById('emergencyContact').value = '(11) 91234-5678';
+      document.getElementById('nationality').value = 'Brasileira';
+      document.getElementById('naturality').value = 'Rio de Janeiro/RJ';
+      
+      // Histórico médico fictício
+      document.querySelector('input[name="preexistingConditions"][value="hipertensao"]').checked = true;
+      document.querySelector('input[name="preexistingConditions"][value="asma"]').checked = true;
+      document.querySelector('input[name="allergies"][value="dipirona"]').checked = true;
+      document.getElementById('currentMedications').value = 'Captopril 25mg - 1x ao dia\nSalbutamol - quando necessário';
+      document.getElementById('medicalHistory').value = 'Internação em 2018 por pneumonia';
+      
+      // Adiciona um responsável de exemplo
+      if (document.querySelectorAll('.guardian-input').length === 1) {
+          addGuardian();
+          const guardians = document.querySelectorAll('.guardian-input');
+          const lastGuardian = guardians[guardians.length - 1];
+          lastGuardian.querySelector('input[name="guardianName"]').value = 'Carlos Exemplo';
+          lastGuardian.querySelector('input[name="guardianRelationship"]').value = 'Marido';
+          lastGuardian.querySelector('input[name="guardianPhone"]').value = '(11) 99876-5432';
+      }
+  }
+
+  // 4. Inicialização
+  function init() {
+      // Adiciona máscaras se jQuery estiver disponível
+      if (typeof $ !== 'undefined') {
+          $('.cpf-mask').mask('000.000.000-00', {reverse: true});
+          $('.rg-mask').mask('00.000.000-0', {reverse: true});
+          $('.phone-mask').mask('(00) 00000-0000');
+      }
+      
+      // Adiciona evento para novos campos de telefone dinâmicos
+      document.addEventListener('DOMNodeInserted', function(e) {
+          if (e.target.name === 'guardianPhone' && typeof $ !== 'undefined') {
+              $(e.target).mask('(00) 00000-0000');
+          }
+      });
+  }
+
+  init();
+});
