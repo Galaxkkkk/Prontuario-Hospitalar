@@ -1,5 +1,8 @@
 {
   "scripts": {
-    "build": "vite build && cp -r dist/* ../backend/public/"
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
   }
 }

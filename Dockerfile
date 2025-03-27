@@ -1,9 +1,17 @@
 # Estágio 1: Build do Frontend
 FROM node:18 as frontend-builder
 WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm install
+
+# Primeiro copia apenas os arquivos de dependências
+COPY frontend/package.json frontend/package-lock.json ./
+
+# Instala todas as dependências (incluindo Vite)
+RUN npm install --include=dev
+
+# Copia o resto do frontend
 COPY frontend/ .
+
+# Executa o build
 RUN npm run build
 
 # Estágio 2: Servidor PHP
@@ -11,14 +19,13 @@ FROM php:8.2-apache
 WORKDIR /var/www/html
 
 # Copia os arquivos built do frontend
-COPY --from=frontend-builder /app/dist/ ./public/
+COPY --from=frontend-builder /app/dist ./public/
 
-# Copia o backend (exceto node_modules)
+# Copia o backend
 COPY backend/ .
 
 # Instala extensões PHP necessárias
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Configura o Apache para usar a pasta public
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+# Configura o Apache
 RUN a2enmod rewrite
