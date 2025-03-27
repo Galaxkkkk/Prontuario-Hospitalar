@@ -1,8 +1,5 @@
 {
   "scripts": {
-    "build": "vite build"
-  },
-  "devDependencies": {
-    "vite": "^5.0.0"
+    "build": "vite build --emptyOutDir"
   }
 }
