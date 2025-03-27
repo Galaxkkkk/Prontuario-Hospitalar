@@ -1,0 +1,13 @@
+[phases.setup]
+cmds = [
+    "cd backend && composer install --no-dev",
+    "cd frontend && npm install"
+]
+
+[phases.build]
+cmds = [
+    "cd frontend && npm run build"
+]
+
+[phases.start]
+cmd = "cd backend && php -S 0.0.0.0:$PORT"

@@ -1,0 +1,6 @@
+{
+  "name": "frontend",
+  "scripts": {
+    "build": "echo 'Build completo!'"
+  }
+}
