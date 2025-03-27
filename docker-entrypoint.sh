@@ -1,16 +1,19 @@
 #!/bin/sh
 set -e
 
+# Define porta padrão se não estiver definida
 PORT=${PORT:-8000}
-DOC_ROOT="/var/www/html/backend/public"
 
-# Verifica se o diretório existe
-if [ ! -d "$DOC_ROOT" ]; then
-  echo "⚠️  Aviso: Diretório $DOC_ROOT não encontrado!"
-  echo "Criando estrutura básica..."
-  mkdir -p "$DOC_ROOT"
-  echo "<h1>Setup completo</h1>" > "$DOC_ROOT/index.html"
+# Verifica se a porta é numérica
+if ! echo "$PORT" | grep -qE '^[0-9]+$'; then
+  echo "❌ ERRO: Porta inválida '$PORT'. Usando fallback 8000."
+  PORT=8000
 fi
 
-echo "🚀 Iniciando servidor na porta $PORT"
-php -S "0.0.0.0:$PORT" -t "$DOC_ROOT"
+# Garante que o diretório existe
+DOC_ROOT="/var/www/html/backend/public"
+mkdir -p "$DOC_ROOT"
+
+# Inicia o servidor PHP com verificação explícita
+echo "🚀 Iniciando servidor PHP em 0.0.0.0:$PORT"
+exec php -S "0.0.0.0:$PORT" -t "$DOC_ROOT"
