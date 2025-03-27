@@ -1,18 +1,21 @@
-FROM php:8.2-apache
+# Estágio 1: Build do Frontend
+FROM node:18 as builder
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
 
-WORKDIR /var/www/html
+# Estágio 2: Servidor de produção
+FROM node:18
+WORKDIR /app
 
-# 1. Instala dependências do PHP
-RUN docker-php-ext-install pdo pdo_mysql && \
-    a2enmod rewrite
+# Copia apenas os arquivos necessários
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
-# 2. Copia o entrypoint modificado
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Instala um servidor HTTP simples
+RUN npm install -g http-server
 
-# 3. Configura o Apache para usar a porta dinâmica
-RUN echo "Listen $PORT" > /etc/apache2/ports.conf && \
-    sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/*.conf
+# Porta que o Railway usa
+EXPOSE $PORT
 
-# 4. Define o entrypoint
-ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["sh", "-c", "http-server dist --port $PORT --proxy http://localhost:$PORT?"]
