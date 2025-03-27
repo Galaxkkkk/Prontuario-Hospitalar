@@ -1,22 +1,25 @@
 # Estágio 1: Build do Frontend
 FROM node:18 as frontend-builder
 WORKDIR /app
-
-# Copia apenas os arquivos essenciais primeiro (otimiza cache)
 COPY frontend/package.json ./
-
-# Instala dependências (cria package-lock.json se não existir)
 RUN npm install --include=dev
-
-# Copia o resto do frontend
 COPY frontend/ .
-
-# Executa o build
-RUN npm run build
+RUN npm run build && mkdir -p /app/public && cp -r dist/* /app/public/
 
 # Estágio 2: Servidor PHP
 FROM php:8.2-apache
 WORKDIR /var/www/html
-COPY --from=frontend-builder /app/dist ./public/
+
+# Cria a estrutura de diretórios necessária
+RUN mkdir -p public/
+
+# Copia os arquivos do frontend
+COPY --from=frontend-builder /app/public ./public/
+
+# Copia o backend (exceto node_modules)
 COPY backend/ .
-RUN docker-php-ext-install pdo pdo_mysql && a2enmod rewrite
+
+# Configurações finais
+RUN docker-php-ext-install pdo pdo_mysql && \
+    a2enmod rewrite && \
+    chown -R www-data:www-data public/
