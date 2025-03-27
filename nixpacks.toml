@@ -10,4 +10,4 @@ cmds = [
 ]
 
 [phases.start]
-cmd = "cd backend && php -S 0.0.0.0:$PORT"
+cmd = "cd backend && php -S 0.0.0.0:$PORT -t public"
