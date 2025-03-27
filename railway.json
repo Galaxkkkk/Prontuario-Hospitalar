@@ -1,0 +1,11 @@
+{
+  "builds": [
+    {
+      "src": "backend",
+      "use": "@railway/php@^2.0",
+      "config": {
+        "publicDir": "public"
+      }
+    }
+  ]
+}
