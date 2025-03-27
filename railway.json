@@ -5,11 +5,9 @@
       "use": "@railway/php@^2.0",
       "config": {
         "publicDir": "public",
-        "runtime": "8.2"
+        "runtime": "8.2",
+        "startCommand": "php -S 0.0.0.0:$PORT -t public"
       }
     }
-  ],
-  "variables": {
-    "NIXPACKS_PHP_FALLBACK_PATH": "/index.php"
-  }
+  ]
 }

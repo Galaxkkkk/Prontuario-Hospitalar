@@ -1,6 +1,5 @@
 {
-  "name": "frontend",
   "scripts": {
-    "build": "echo 'Build completo!'"
+    "build": "vite build && cp -r dist/* ../backend/public/"
   }
 }

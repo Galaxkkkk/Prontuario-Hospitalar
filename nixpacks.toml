@@ -1,17 +1,14 @@
 [phases.setup]
 cmds = [
-    # Backend
     "cd backend && composer install --no-dev",
-    # Frontend (se usar build)
     "cd frontend && npm install"
 ]
 
 [phases.build]
 cmds = [
-    # Se seu frontend precisa de build (React/Vue/etc)
     "cd frontend && npm run build",
-    # Copia frontend para a pasta pública (opcional)
-    "cp -r frontend/* backend/public/"
+    "mkdir -p backend/public",
+    "cp -r frontend/dist/* backend/public/ || true"
 ]
 
 [phases.start]
