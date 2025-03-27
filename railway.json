@@ -4,8 +4,12 @@
       "src": "backend",
       "use": "@railway/php@^2.0",
       "config": {
-        "publicDir": "public"
+        "publicDir": "public",
+        "runtime": "8.2"
       }
     }
-  ]
+  ],
+  "variables": {
+    "NIXPACKS_PHP_FALLBACK_PATH": "/index.php"
+  }
 }

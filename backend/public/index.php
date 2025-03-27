@@ -1,4 +1,2 @@
 <?php
-  header("Content-Type: application/json");
-  echo json_encode(["status" => "Online"]);
-?>
+require __DIR__.'/../api/patients/read.php';
